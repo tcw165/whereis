@@ -24,6 +24,7 @@
 
 ;; GNU library.
 (require 'shell)
+(require 'sh-script)
 (require 'esh-mode)
 (require 'thingatpt)
 
@@ -93,7 +94,7 @@
 (defun whereis-shell-backend (command &rest args)
   (cond
    ((eq command :symbol)
-    (when (memq major-mode '(shell-mode eshell-mode))
+    (when (memq major-mode '(shell-mode eshell-mode sh-mode))
       (or (save-excursion
             (whereis-shell-thingatpt))
           :stop)))
@@ -105,6 +106,7 @@
         (with-temp-buffer
           (call-process-shell-command (format "man %s|col -x -b" command)
                                       nil (list (current-buffer) nil))
+          ;; TODO: Support for local node modules.
           (unless (string= "" (buffer-string))
             (let* ((keyword-1 (format "\\s-+\\(?1:%s\\)" keyword))
                    ;; Command keyword.
