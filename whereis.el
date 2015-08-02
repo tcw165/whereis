@@ -232,13 +232,16 @@ Dummy keymap function."
 
 (defun whereis-thingatpt (thing)
   "[internal usage]
-Adapter to `thing-at-point' for compatibility of Emacs 24.3 and 24.4."
-  (let ((bounds (if (region-active-p)
+Adapter to `thing-at-point' for compatibility of Emacs 24.3 and 24.4. It will
+skip line-break and whitespace."
+  (let* ((bounds (if (region-active-p)
                     (cons (region-beginning) (region-end))
-                  (bounds-of-thing-at-point thing))))
-    (and bounds
-         (buffer-substring-no-properties (car bounds)
-                                         (cdr bounds)))))
+                   (bounds-of-thing-at-point thing)))
+         (str (and bounds
+                   (buffer-substring-no-properties (car bounds)
+                                                   (cdr bounds)))))
+    (and str (null (string-match "\\(\n\\|\r\\|\\s-\\)" str))
+         str)))
 
 (defun whereis-dummy-backend (command &rest args)
   "[internal usage] [sample]
