@@ -383,17 +383,20 @@ The core dispatcher."
                 deferred-candidates))
             (deferred:nextc it
               (lambda (all)
+                ;; Extract deferred candidates.
+                (mapc (lambda (cand-1)
+                        (mapc (lambda (cand-2)
+                                (when (plist-get cand-2 :src)
+                                  (push cand-2 total-candidates)))
+                              cand-1))
+                      all)
+                ;; (message "act:%s\ncand(s):%s" frontend-act total-candidates)
                 ;; Check mode again because it's a deferred command.
-                (when whereis-symbol-mode
-                  ;; Extract deferred candidates.
-                  (mapc (lambda (cand-1)
-                          (mapc (lambda (cand-2)
-                                  (when (plist-get cand-2 :src)
-                                    (push cand-2 total-candidates)))
-                                cand-1))
-                        all)
-                  ;; (message "act:%s\ncand(s):%s" frontend-act total-candidates)
-                  (whereis-call-frontend frontend-act total-candidates))))))
+                (if (or (and (eq frontend-act :go)
+                             (= 1 (length total-candidates)))
+                        whereis-symbol-mode)
+                    (whereis-call-frontend frontend-act total-candidates)
+                  (message "Please enable `whereis-symbol-mode'"))))))
       (error (error "whereis error: %s\n%s" err
                     "        backend:" whereis-backend)))))
 
