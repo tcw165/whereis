@@ -330,10 +330,10 @@ e.g. `bookmark-set'"
                (hooks (symbol-value mode-hook)))
           ;; Disable ???-mode-hook temporarily so that redundant minor-modes can
           ;; be skipped.
-          (set mode-hook nil)
+          (setf mode-hook nil)
           (funcall mode-func)
           ;; Restore ???-mode-hook.
-          (set mode-hook hooks)
+          (setf mode-hook hooks)
           (throw 'applied t)))
       nil)))
 
@@ -452,11 +452,12 @@ candidate."
              (if buf
                  ;; In case of the buffer is modified.
                  (insert (with-current-buffer buf
-                           (buffer-string)))
+                             (buffer-string)))
                ;; Get content from file directly.
                (insert-file-contents-literally src))
              ;; Change major-mode refer to file name.
-             (whereis-ui-apply-major-mode src))
+             (whereis-ui-apply-major-mode src)
+             )
          ;; Documentation ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
          (insert src))
        ;; Apply major mode if any.
@@ -560,6 +561,8 @@ Example:
    ((eq :init command)
     (whereis-ui-toggle-symbol-preview-window 1))
    ((eq :destroy command)
+    (setq whereis-ui-candidates nil
+          whereis-index 0)
     (whereis-ui-toggle-symbol-preview-window -1))
    ((memq command '(:show :go :update))
     ;; Avoid rob `helm' buffer because frontend is rendered after a tiny delay.

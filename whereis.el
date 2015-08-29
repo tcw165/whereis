@@ -391,14 +391,14 @@ The core dispatcher."
                               cand-1))
                       all)
                 ;; (message "act:%s\ncand(s):%s" frontend-act total-candidates)
-                ;; Check mode again because it's a deferred command.
+                ;; Check mode again because it's executed with a delay.
                 (if (or (and (eq frontend-act :go)
-                             (= 1 (length total-candidates)))
-                        whereis-symbol-mode)
+                               (= 1 (length total-candidates)))
+                          whereis-symbol-mode)
                     (whereis-call-frontend frontend-act total-candidates)
-                  (message "Please enable `whereis-symbol-mode'"))))))
-      (error (error "whereis error: %s\n%s" err
-                    "        backend:" whereis-backend)))))
+                  ;; Kill dispatcher.
+                  (whereis-kill-dispatcher))))))
+      (error (error "whereis error: %s when using %s" err whereis-backend)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Where Is Symbol Mode ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -407,20 +407,26 @@ The core dispatcher."
   "The idle delay in seconds before the `whereis-symbol-mode' engine starts."
   :type '(number :tag "Seconds"))
 
-(defvar whereis-timer nil
-  "The idle timer to call `whereis-dispatch'.")
-
 (defvar whereis-source-buffer nil
   "Cached source code buffer.")
 
 (defvar whereis-source-window nil
   "Cached window where the source code buffer is at.")
 
+(defvar whereis-dispatcher-timer nil
+  "A idle timer for dispatching.")
+
 (defun whereis-call-frontend (command &optional candidates)
   ;; Resolve duplicates.
   (when candidates
     (setq candidates (delete-dups (delq nil candidates))))
   (apply 'whereis-ui-previewer command (list candidates)))
+
+(defun whereis-kill-dispatcher ()
+  "Kill the idle timer for dispatching."
+  (when (timerp whereis-dispatcher-timer)
+    (cancel-timer whereis-dispatcher-timer)
+    (setq whereis-dispatcher-timer nil)))
 
 ;;;###autoload
 (define-minor-mode whereis-symbol-mode
@@ -439,13 +445,13 @@ and show the reference visually through frontends."
         ;; Initialize front-ends & back-ends.
         (whereis-call-frontend :init)
         (mapc 'whereis-init-backend whereis-backends)
-        (setq whereis-timer (run-with-idle-timer
-                             whereis-idle-delay t 'whereis-dispatch)))
+        ;; (whereis-setup-dispatcher)
+        (setq whereis-dispatcher-timer
+              (run-with-idle-timer whereis-idle-delay t 'whereis-dispatch)))
+    ;; Cancel timer.
+    (whereis-kill-dispatcher)
     ;; Destroy front-ends.
-    (whereis-call-frontend :destroy)
-    (when whereis-timer
-      (cancel-timer whereis-timer)
-      (setq whereis-timer nil))))
+    (whereis-call-frontend :destroy)))
 
 ;; TODO: menu-bar and tool-bar keymap.
 
