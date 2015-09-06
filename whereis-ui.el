@@ -52,6 +52,10 @@
          (define-key map usr-key 'whereis-ui-open-candidate))
     map))
 
+(defvar whereis-file-truename nil
+  "The file name for prompt buffer.")
+(make-variable-buffer-local 'whereis-file-truename)
+
 (define-minor-mode whereis-ui-candidate-mode
   "Minor mode for preview buffer."
   :lighter " whereis:cand"
@@ -455,9 +459,10 @@ candidate."
                              (buffer-string)))
                ;; Get content from file directly.
                (insert-file-contents-literally src))
+             ;; Save the file name.
              ;; Change major-mode refer to file name.
              (whereis-ui-apply-major-mode src)
-             )
+             (setq whereis-file-truename (abbreviate-file-name src)))
          ;; Documentation ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
          (insert src))
        ;; Apply major mode if any.
